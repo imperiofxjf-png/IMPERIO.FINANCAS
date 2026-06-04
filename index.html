@@ -755,19 +755,19 @@
                 <td>${t.categoria}</td>
                 <td>${t.descricao || '-'}</td>
                 <td>R$ ${t.valor.toFixed(2)}</td>
-             </tr>`; 
+              </tr>`; 
         });
-        html+=`</tbody>}</table>`;
+        html+=`</tbody></table>`;
         html += `<h5>📈 Receitas por Categoria</h5><table style="width:100%; border-collapse:collapse; border:1px solid #ddd;">
             <thead><tr style="background:#10b981; color:white;"><th>Categoria</th><th>Valor</th></tr></thead><tbody>`;
         if (Object.keys(receitasPorCat).length === 0) html+=`<tr><td colspan="2">Nenhuma receita no período</td></tr>`;
         else { for (let [cat, val] of Object.entries(receitasPorCat)) { html+=`<tr><td>${cat}</td><td>R$ ${val.toFixed(2)}</td></tr>`; } }
-        html+=`</tbody>}</table>`;
+        html+=`</tbody></table>`;
         html += `<h5>📉 Despesas por Categoria</h5><table style="width:100%; border-collapse:collapse; border:1px solid #ddd;">
             <thead><tr style="background:#ef4444; color:white;"><th>Categoria</th><th>Valor</th></tr></thead><tbody>`;
         if (Object.keys(despesasPorCat).length === 0) html+=`<tr><td colspan="2">Nenhuma despesa no período</td></tr>`;
         else { for (let [cat, val] of Object.entries(despesasPorCat)) { html+=`<tr><td>${cat}</td><td>R$ ${val.toFixed(2)}</td></tr>`; } }
-        html+=`</tbody>}</table>`;
+        html+=`</tbody></table>`;
         html+=`<div style="margin-top:20px; padding:10px; background:#f3f4f6; border-radius:10px;">
             <strong>Totais:</strong> Receitas: R$ ${rec.toFixed(2)} | Despesas: R$ ${desp.toFixed(2)} | Saldo: R$ ${(rec-desp).toFixed(2)}
         </div>`;
@@ -869,7 +869,7 @@
                                 <th>Receitas</th>
                                 <th>Despesas</th>
                                 <th>Saldo</th>
-                             </tr>
+                              </tr>
                         </thead>
                         <tbody>`;
         let totalR=0,totalD=0;
@@ -889,16 +889,16 @@
                         <td>R$ ${rec.toFixed(2)}</td>
                         <td>R$ ${desp.toFixed(2)}</td>
                         <td style="color:${rec-desp>=0?'green':'red'}">R$ ${(rec-desp).toFixed(2)}</td>
-                     </tr>`;
+                      </tr>`;
         }
         html+=`<tr style="font-weight:bold; background:#f3f4f6;">
                     <td>TOTAL</td>
                     <td>R$ ${totalR.toFixed(2)}</td>
                     <td>R$ ${totalD.toFixed(2)}</td>
                     <td>R$ ${(totalR-totalD).toFixed(2)}</td>
-                 </tr>
+                  </tr>
             </tbody>
-         </table>`;
+          </table>`;
         
         // Criar modal com botões Fechar e Imprimir
         const modal = document.createElement('div');
@@ -1062,16 +1062,25 @@
     })();
 
     // ============================================
-    // PWA: Sistema de Instalação Nativa
+    // PWA: Sistema de Instalação Nativa com ÍCONE BONITO
     // ============================================
     (function setupPWA() {
+        // NOVA FUNÇÃO DE ÍCONE PROFISSIONAL E BONITO
         async function generateIcon(size, bgColor = "#064e3b", iconColor = "#ffffff") {
             return new Promise((resolve) => {
                 const canvas = document.createElement('canvas');
                 canvas.width = size;
                 canvas.height = size;
                 const ctx = canvas.getContext('2d');
-                ctx.fillStyle = bgColor;
+
+                // Gradiente de fundo (verde escuro para verde médio)
+                const gradient = ctx.createLinearGradient(0, 0, size, size);
+                gradient.addColorStop(0, '#064e3b');
+                gradient.addColorStop(1, '#059669');
+                ctx.fillStyle = gradient;
+                
+                // Arredondamento bonito (22% do tamanho)
+                const radius = size * 0.22;
                 ctx.beginPath();
                 if (!CanvasRenderingContext2D.prototype.roundRect) {
                     CanvasRenderingContext2D.prototype.roundRect = function(x, y, w, h, r) {
@@ -1089,16 +1098,37 @@
                         return this;
                     };
                 }
-                ctx.roundRect(0, 0, size, size, size * 0.2);
+                ctx.roundRect(0, 0, size, size, radius);
                 ctx.fill();
+
+                // Sombra leve para destaque
+                ctx.shadowColor = 'rgba(0,0,0,0.3)';
+                ctx.shadowBlur = size * 0.05;
+                
+                // Ícone principal: SACO DE DINHEIRO + GRÁFICO ASCENDENTE
+                // Usamos font-awesome simulada via texto (pois o canvas não carrega font-awesome diretamente)
                 ctx.fillStyle = iconColor;
-                ctx.font = `bold ${size * 0.5}px "Segoe UI", "Font Awesome 6 Free"`;
+                ctx.font = `bold ${size * 0.48}px "Segoe UI", "Font Awesome 6 Free", "Apple Color Emoji"`;
                 ctx.textAlign = "center";
                 ctx.textBaseline = "middle";
-                ctx.fillText("⛪", size/2, size/2 - size*0.1);
-                ctx.font = `bold ${size * 0.25}px "Segoe UI"`;
-                ctx.fillStyle = "#fbbf24";
-                ctx.fillText("$", size*0.7, size*0.7);
+                ctx.shadowBlur = size * 0.03;
+                // Emoji de dinheiro + gráfico (combinado)
+                ctx.fillText("💰📈", size/2, size/2 - size*0.05);
+                
+                // Cifrão $ estilizado em destaque
+                ctx.font = `bold ${size * 0.28}px "Segoe UI"`;
+                ctx.fillStyle = "#fbbf24"; // dourado
+                ctx.shadowBlur = size * 0.02;
+                ctx.fillText("$", size*0.75, size*0.75);
+                
+                // Pequeno detalhe: estrela/símbolo de sucesso
+                ctx.font = `${size * 0.12}px "Segoe UI"`;
+                ctx.fillStyle = "#fcd34d";
+                ctx.fillText("✦", size*0.25, size*0.3);
+                
+                // Resetar sombra
+                ctx.shadowBlur = 0;
+                
                 canvas.toBlob(blob => {
                     const url = URL.createObjectURL(blob);
                     resolve({ url, size });
@@ -1212,4 +1242,4 @@
     })();
 </script>
 </body>
-</html>
+            </html>
