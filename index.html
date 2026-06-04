@@ -1,0 +1,1215 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes, viewport-fit=cover">
+    <title>IMPÉRIO FERNANDES FINANÇAS | Multi-Contas com Login Master (Versão Aprimorada)</title>
+    <!-- PWA: manifest será gerado dinamicamente -->
+    <link rel="manifest" id="dynamic-manifest">
+    <!-- PWA: ícone para iOS -->
+    <link rel="apple-touch-icon" id="apple-touch-icon">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="theme-color" content="#064e3b">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Segoe UI', sans-serif; }
+        body { background: linear-gradient(135deg, #f0fdf4 0%, #dcfce7 100%); min-height: 100vh; padding: 12px; }
+        .container { max-width: 1600px; margin: 0 auto; }
+        .login-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: linear-gradient(135deg, #064e3b 0%, #047857 100%); z-index: 100000; display: flex; align-items: center; justify-content: center; }
+        .login-box { background: white; border-radius: 30px; padding: 30px 20px; width: 90%; max-width: 400px; text-align: center; box-shadow: 0 25px 50px rgba(0,0,0,0.3); }
+        .login-box h1 { color: #064e3b; margin-bottom: 10px; font-size: 1.6rem; }
+        .login-box .sub { color: #6b7280; margin-bottom: 30px; font-size: 0.85rem; }
+        .login-input, .conta-select-login { width: 100%; padding: 12px 16px; margin: 12px 0; border: 2px solid #e5e7eb; border-radius: 15px; font-size: 1rem; background: white; }
+        .login-input:focus { outline: none; border-color: #10b981; }
+        .login-btn { width: 100%; padding: 14px; background: linear-gradient(135deg, #064e3b, #047857); color: white; border: none; border-radius: 15px; font-size: 1rem; font-weight: bold; cursor: pointer; margin-top: 15px; }
+        .login-error { color: #ef4444; margin-top: 15px; font-size: 0.85rem; }
+        .header-institucional { background: linear-gradient(135deg, #064e3b 0%, #047857 100%); color: white; padding: 20px; border-radius: 25px; margin-bottom: 20px; }
+        .logo-area { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 15px; }
+        .logo-area h1 { font-size: 1.5rem; display: flex; align-items: center; gap: 10px; flex-wrap: wrap; word-break: break-word; }
+        .logo-area h1 i { font-size: 1.5rem; }
+        .user-info { background: rgba(255,255,255,0.15); padding: 8px 12px; border-radius: 15px; display: flex; align-items: center; gap: 10px; flex-wrap: wrap; justify-content: flex-end; }
+        .user-info button, .user-info span { font-size: 0.8rem; }
+        .user-info #connectionStatus, .user-info #recarregarDadosBtn, .user-info #importarBackupRapidoBtn { font-size: 0.75rem; padding: 4px 10px; }
+        .dashboard-cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 15px; margin-bottom: 25px; }
+        .card-modern { background: white; border-radius: 20px; padding: 18px; box-shadow: 0 5px 15px rgba(0,0,0,0.08); border-left: 5px solid; cursor: pointer; }
+        .card-receita { border-left-color: #10b981; }
+        .card-despesa { border-left-color: #ef4444; }
+        .card-saldo { border-left-color: #3b82f6; }
+        .card-modern h4 { font-size: 0.75rem; text-transform: uppercase; color: #6b7280; margin-bottom: 8px; }
+        .card-modern .valor-grande { font-size: 1.6rem; font-weight: bold; word-break: break-word; }
+        .tabs-system { background: white; border-radius: 20px; padding: 5px; margin-bottom: 25px; display: flex; flex-wrap: wrap; gap: 5px; overflow-x: auto; white-space: nowrap; -webkit-overflow-scrolling: touch; }
+        .tab-btn { flex: 0 0 auto; padding: 10px 16px; border: none; background: transparent; font-weight: 600; cursor: pointer; border-radius: 15px; color: #4b5563; transition: all 0.2s; font-size: 0.85rem; }
+        .tab-btn i { margin-right: 5px; }
+        .tab-btn.active { background: linear-gradient(135deg, #064e3b, #047857); color: white; }
+        .panel { display: none; background: white; border-radius: 25px; padding: 20px; margin-bottom: 30px; box-shadow: 0 10px 30px rgba(0,0,0,0.08); }
+        .panel.active-panel { display: block; }
+        .form-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 15px; margin-bottom: 20px; background: #f9fafb; padding: 18px; border-radius: 20px; }
+        .input-field { display: flex; flex-direction: column; }
+        .input-field label { font-size: 0.75rem; font-weight: 600; color: #374151; margin-bottom: 5px; }
+        .input-field input, .input-field select { padding: 8px 12px; border: 2px solid #e5e7eb; border-radius: 12px; font-size: 0.85rem; }
+        button { padding: 8px 16px; border-radius: 12px; border: none; font-weight: 600; cursor: pointer; background: #047857; color: white; font-size: 0.85rem; }
+        button:hover { transform: translateY(-2px); }
+        .btn-danger { background: #dc2626; }
+        .btn-secondary { background: #6b7280; }
+        .table-responsive { overflow-x: auto; margin-top: 15px; -webkit-overflow-scrolling: touch; }
+        table { width: 100%; border-collapse: collapse; min-width: 500px; }
+        th { 
+            background: #f3f4f6; 
+            padding: 10px 8px; 
+            text-align: left; 
+            font-weight: 600; 
+            font-size: 0.8rem; 
+            color: #000000 !important; 
+        }
+        td { padding: 8px; border-bottom: 1px solid #e5e7eb; vertical-align: middle; font-size: 0.8rem; }
+        .badge { padding: 3px 8px; border-radius: 20px; font-size: 0.7rem; font-weight: 600; }
+        .charts-row { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 20px; margin: 20px 0; }
+        .chart-box { background: #f9fafb; padding: 15px; border-radius: 20px; }
+        .categoria-item, .forma-item { display: inline-flex; align-items: center; gap: 8px; background: #eef2ff; padding: 5px 12px; border-radius: 40px; margin: 4px; font-size: 0.8rem; }
+        .loading-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.7); z-index: 99999; display: flex; align-items: center; justify-content: center; }
+        .loading-content { background: white; padding: 25px; border-radius: 20px; color: #064e3b; text-align: center; }
+        @media print { .no-print { display: none; } body { padding: 0; margin: 0; } }
+        .btn-master { background: linear-gradient(135deg, #8b5cf6, #6d28d9); }
+        .edit-btn { background: #f59e0b; margin-right: 5px; }
+        .small-btn { padding: 4px 8px; font-size: 0.7rem; }
+        .toast-message { position: fixed; bottom: 20px; left: 20px; right: 20px; background: #1f2937; color: white; padding: 10px 16px; border-radius: 40px; z-index: 100000; font-size: 0.8rem; box-shadow: 0 5px 15px rgba(0,0,0,0.2); display: flex; align-items: center; gap: 8px; animation: fadeInOut 3s ease; max-width: 90%; }
+        @keyframes fadeInOut { 0% { opacity: 0; transform: translateY(20px); } 10% { opacity: 1; transform: translateY(0); } 90% { opacity: 1; transform: translateY(0); } 100% { opacity: 0; transform: translateY(20px); } }
+        
+        .install-button {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            background: linear-gradient(135deg, #10b981, #059669);
+            color: white;
+            border: none;
+            border-radius: 50px;
+            padding: 10px 18px;
+            font-size: 0.85rem;
+            font-weight: bold;
+            box-shadow: 0 8px 20px rgba(0,0,0,0.2);
+            cursor: pointer;
+            z-index: 9999;
+            display: none;
+            align-items: center;
+            gap: 8px;
+            transition: transform 0.2s;
+        }
+        .install-button:hover { transform: scale(1.05); }
+        .install-button i { font-size: 1.1rem; }
+        
+        @media (max-width: 600px) {
+            body { padding: 8px; }
+            .header-institucional { padding: 15px; }
+            .logo-area h1 { font-size: 1.2rem; }
+            .logo-area h1 i { font-size: 1.2rem; }
+            .user-info { padding: 6px 10px; gap: 6px; }
+            .user-info button, .user-info span { font-size: 0.7rem; }
+            .dashboard-cards { gap: 10px; }
+            .card-modern .valor-grande { font-size: 1.3rem; }
+            .tab-btn { padding: 8px 12px; font-size: 0.75rem; }
+            .tab-btn i { margin-right: 3px; }
+            .panel { padding: 15px; }
+            .form-grid { padding: 12px; gap: 10px; }
+            .input-field input, .input-field select { padding: 6px 10px; font-size: 0.8rem; }
+            button { padding: 6px 12px; font-size: 0.8rem; }
+            th, td { font-size: 0.7rem; padding: 6px; }
+            .chart-box { padding: 10px; }
+            .categoria-item, .forma-item { font-size: 0.7rem; padding: 3px 10px; }
+            .status-online, .status-offline { font-size: 0.7rem; padding: 2px 8px; }
+        }
+    </style>
+</head>
+<body>
+
+<!-- TELA DE LOGIN -->
+<div id="loginOverlay" class="login-overlay">
+    <div class="login-box">
+        <div style="font-size: 48px;">🏛️</div>
+        <h1>IMPÉRIO FERNANDES FINANÇAS</h1>
+        <div class="sub">Sistema de Gestão Financeira</div>
+        <select id="loginContaSelect" class="conta-select-login">
+            <option value="">Carregando...</option>
+            <option value="MASTER">--- ADMINISTRADOR MASTER ---</option>
+        </select>
+        <input type="password" id="loginSenha" class="login-input" placeholder="Digite a senha" autocomplete="off">
+        <button id="loginBtn" class="login-btn"><i class="fas fa-unlock-alt"></i> Acessar</button>
+        <div id="loginError" class="login-error"></div>
+        <div style="margin-top: 15px; font-size: 11px; color: #999;">
+            <i class="fas fa-shield-alt"></i> Acesso por conta ou administrador master
+        </div>
+    </div>
+</div>
+
+<!-- CONTEÚDO PRINCIPAL -->
+<div id="appContent" style="display: none;">
+<div class="container">
+    <div class="header-institucional no-print">
+        <div class="logo-area">
+            <h1><i class="fas fa-church"></i> <span id="contaNomeHeader">IMPÉRIO FERNANDES</span> FINANÇAS</h1>
+            <div class="user-info">
+                <i class="fas fa-user-lock"></i> <span id="usuarioLogadoLabel"></span>
+                <span id="connectionStatus" class="status-online"><i class="fas fa-wifi"></i> Online</span>
+                <button id="recarregarDadosBtn" title="Recarregar dados do banco local"><i class="fas fa-sync-alt"></i> Recarregar</button>
+                <button id="importarBackupRapidoBtn" title="Carregar informações de um backup"><i class="fas fa-upload"></i> Carregar Backup</button>
+                <button id="logoutBtn"><i class="fas fa-sign-out-alt"></i> Sair</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="dashboard-cards no-print">
+        <div class="card-modern card-receita">
+            <h4><i class="fas fa-arrow-up"></i> TOTAL RECEITAS</h4>
+            <div class="valor-grande" id="totalReceitas">R$ 0,00</div>
+        </div>
+        <div class="card-modern card-despesa">
+            <h4><i class="fas fa-arrow-down"></i> TOTAL DESPESAS</h4>
+            <div class="valor-grande" id="totalDespesas">R$ 0,00</div>
+        </div>
+        <div class="card-modern card-saldo">
+            <h4><i class="fas fa-balance-scale"></i> SALDO GERAL</h4>
+            <div class="valor-grande" id="saldoTotal">R$ 0,00</div>
+        </div>
+    </div>
+
+    <div class="tabs-system no-print" id="tabContainer">
+        <button class="tab-btn active" data-tab="dashboard"><i class="fas fa-chart-pie"></i> Dashboard</button>
+        <button class="tab-btn" data-tab="lancamentos"><i class="fas fa-plus-circle"></i> Lançamentos</button>
+        <button class="tab-btn" data-tab="categorias"><i class="fas fa-tags"></i> Categorias</button>
+        <button class="tab-btn" data-tab="relatorios"><i class="fas fa-file-alt"></i> Relatórios</button>
+        <button class="tab-btn" data-tab="contas" id="tabContasBtn"><i class="fas fa-church"></i> Admin: Contas</button>
+        <button class="tab-btn" data-tab="backup"><i class="fas fa-database"></i> Backup</button>
+    </div>
+
+    <!-- DASHBOARD -->
+    <div id="dashboard" class="panel active-panel">
+        <h2><i class="fas fa-chart-pie"></i> Dashboard Financeiro</h2>
+        <div class="charts-row">
+            <div class="chart-box">
+                <h4>Comparativo Mensal</h4>
+                <canvas id="graficoMensal" height="250"></canvas>
+            </div>
+            <div class="chart-box">
+                <h4>Despesas por Categoria</h4>
+                <canvas id="graficoPizza" height="250"></canvas>
+            </div>
+        </div>
+        <div class="chart-box">
+            <h4>Últimas Transações</h4>
+            <div class="table-responsive">
+                <table id="ultimasTransacoes">
+                    <thead><tr><th>Data</th><th>Descrição</th><th>Categoria</th><th>Valor</th></tr></thead>
+                    <tbody></tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- LANÇAMENTOS -->
+    <div id="lancamentos" class="panel">
+        <h2 id="formTitle"><i class="fas fa-plus-circle"></i> Novo Lançamento</h2>
+        <div class="form-grid">
+            <div class="input-field"><label>Tipo</label><select id="tipoTransacao"><option value="receita">💰 Receita</option><option value="despesa">📉 Despesa</option></select></div>
+            <div class="input-field"><label>Categoria</label><select id="categoriaSelect"></select></div>
+            <div class="input-field"><label>Valor (R$)</label><input type="number" id="valorTransacao" step="0.01"></div>
+            <div class="input-field"><label>Data</label><input type="date" id="dataTransacao"></div>
+            <div class="input-field"><label>Descrição</label><input type="text" id="descTransacao" placeholder="Descrição..."></div>
+            <div class="input-field"><label>Forma Pagamento</label><select id="formaPagamento"></select></div>
+            <div><button id="salvarTransacao"><i class="fas fa-save"></i> Salvar</button> <button id="cancelarEdicao" style="display:none; background:#6b7280;"><i class="fas fa-times"></i> Cancelar</button></div>
+        </div>
+        <h3>Histórico Completo</h3>
+        <div class="table-responsive">
+            <table id="tabelaTransacoes">
+                <thead><tr><th>Data</th><th>Tipo</th><th>Categoria</th><th>Descrição</th><th>Valor</th><th>Ações</th></tr></thead>
+                <tbody></tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- CATEGORIAS E FORMAS DE PAGAMENTO -->
+    <div id="categorias" class="panel">
+        <h2><i class="fas fa-tags"></i> Gerenciar Categorias</h2>
+        <div class="form-grid">
+            <div class="input-field"><label>Nova Categoria</label><input type="text" id="novaCategoriaNome" placeholder="Ex: Dízimos"></div>
+            <div class="input-field"><label>Tipo</label><select id="tipoCategoria"><option value="ambos">Ambos</option><option value="receita">Receita</option><option value="despesa">Despesa</option></select></div>
+            <div><button id="adicionarCategoria"><i class="fas fa-plus"></i> Adicionar</button></div>
+        </div>
+        <div id="listaCategorias"></div>
+
+        <hr style="margin: 30px 0;">
+        <h2><i class="fas fa-credit-card"></i> Formas de Pagamento</h2>
+        <div class="form-grid">
+            <div class="input-field"><label>Nova Forma</label><input type="text" id="novaFormaNome" placeholder="Ex: Pix, Dinheiro, Cartão"></div>
+            <div><button id="adicionarFormaPagamento"><i class="fas fa-plus"></i> Adicionar</button></div>
+        </div>
+        <div id="listaFormasPagamento"></div>
+    </div>
+
+    <!-- RELATÓRIOS -->
+    <div id="relatorios" class="panel">
+        <h2><i class="fas fa-chart-bar"></i> Relatórios Financeiros</h2>
+        <div class="form-grid">
+            <div class="input-field"><label>Mês</label><select id="relMes"><option value="1">Janeiro</option><option value="2">Fevereiro</option><option value="3">Março</option><option value="4">Abril</option><option value="5">Maio</option><option value="6">Junho</option><option value="7">Julho</option><option value="8">Agosto</option><option value="9">Setembro</option><option value="10">Outubro</option><option value="11">Novembro</option><option value="12">Dezembro</option></select></div>
+            <div class="input-field"><label>Ano</label><input type="number" id="relAno" value="2025"></div>
+            <div class="btn-group" style="display: flex; gap: 10px; flex-wrap: wrap;">
+                <button id="gerarRelatorio"><i class="fas fa-search"></i> Gerar</button>
+                <button id="imprimirRelatorio" class="btn-print"><i class="fas fa-print"></i> Imprimir</button>
+                <button id="exportarPDF" class="btn-secondary"><i class="fas fa-file-pdf"></i> Salvar PDF</button>
+                <button id="btnRelatorioAvancado" class="btn-master"><i class="fas fa-chart-line"></i> Relatório Avançado</button>
+            </div>
+        </div>
+        <div id="conteudoRelatorio" class="relatorio-box"></div>
+    </div>
+
+    <!-- ADMIN: CONTAS (somente master) -->
+    <div id="contas" class="panel">
+        <h2><i class="fas fa-church"></i> Administração de Contas (Master)</h2>
+        <p style="color: #ef4444; margin-bottom: 15px;"><i class="fas fa-shield-alt"></i> Esta área é restrita ao administrador master</p>
+        <div class="form-grid">
+            <div class="input-field"><label>Nome da Conta</label><input type="text" id="novaContaNome" placeholder="Ex: Nova Conta"></div>
+            <div class="input-field"><label>Senha de Acesso</label><input type="password" id="novaContaSenha" placeholder="Senha para esta conta"></div>
+            <div class="input-field"><label>Endereço</label><input type="text" id="novaContaEndereco" placeholder="Endereço (opcional)"></div>
+            <div><button id="adicionarConta"><i class="fas fa-plus-circle"></i> Criar Nova Conta</button></div>
+        </div>
+        <div class="form-grid" style="margin-top:20px; background:#fef3c7;">
+            <div class="input-field"><label>Alterar Senha Master</label><input type="password" id="novaSenhaMaster" placeholder="Nova senha master"></div>
+            <div><button id="alterarSenhaMasterBtn"><i class="fas fa-key"></i> Alterar Senha Master</button></div>
+        </div>
+        <h3>Contas Cadastradas</h3>
+        <div id="listaContas"></div>
+        <div class="info-box" style="margin-top:20px; padding:15px; background:#fef3c7; border-radius:15px;">
+            <i class="fas fa-info-circle"></i> <strong>Informações:</strong><br>
+            🔐 Cada conta tem sua própria senha de acesso independente.<br>
+            👑 O administrador master pode criar/editar/excluir contas.<br>
+            📊 Os dados financeiros (transações, categorias, formas de pagamento) são totalmente isolados por conta.
+        </div>
+    </div>
+
+    <!-- BACKUP -->
+    <div id="backup" class="panel">
+        <h2><i class="fas fa-shield-alt"></i> Backup e Restauração</h2>
+        <div class="form-grid">
+            <div><button id="fazerBackup"><i class="fas fa-download"></i> Exportar Backup Completo</button></div>
+            <div><button id="restaurarBackupBtn" class="btn-secondary" onclick="document.getElementById('restoreFile').click()"><i class="fas fa-upload"></i> Restaurar Backup</button></div>
+            <input type="file" id="restoreFile" accept=".json" style="display:none;">
+        </div>
+        <div id="storageInfo" style="margin-top:20px; padding:15px; background:#f0fdf4; border-radius:15px;"></div>
+    </div>
+</div>
+</div>
+
+<!-- PWA: Botão flutuante de instalação -->
+<button id="installBtn" class="install-button"><i class="fas fa-download"></i> Instalar App</button>
+
+<script>
+    // ============================================
+    // CÓDIGO COMPLETO DO APP (FUNCIONALIDADES EXISTENTES + OFFLINE + RESPONSIVO)
+    // ============================================
+    
+    const DB_NAME = 'IMPERIO_FERNANDES_Multi_Igrejas_DB';
+    const DB_VERSION = 4;
+    let db = null;
+    let todasContas = [];
+    let contaAtual = null;
+    let transacoes = [];
+    let categorias = [];
+    let formasPagamento = [];
+    let usuarioLogado = null;
+    let MASTER_SENHA = 'admin123';
+    let editandoId = null;
+    
+    // --- Função para mostrar toast ---
+    function showToast(msg, tipo = 'info') {
+        const toast = document.createElement('div');
+        toast.className = 'toast-message';
+        const icone = tipo === 'success' ? '✅' : (tipo === 'error' ? '❌' : 'ℹ️');
+        toast.innerHTML = `<span>${icone}</span> ${msg}`;
+        document.body.appendChild(toast);
+        setTimeout(() => toast.remove(), 3000);
+    }
+    
+    // --- Atualizar status de conexão ---
+    function updateConnectionStatus() {
+        const statusEl = document.getElementById('connectionStatus');
+        if (!statusEl) return;
+        if (navigator.onLine) {
+            statusEl.innerHTML = '<i class="fas fa-wifi"></i> Online';
+            statusEl.className = 'status-online';
+        } else {
+            statusEl.innerHTML = '<i class="fas fa-plug"></i> Offline';
+            statusEl.className = 'status-offline';
+            showToast('Modo offline: os dados são salvos localmente e sincronizados quando a conexão retornar.', 'info');
+        }
+    }
+    
+    window.addEventListener('online', () => { updateConnectionStatus(); showToast('Conexão restaurada! Os dados serão sincronizados normalmente.', 'success'); });
+    window.addEventListener('offline', () => { updateConnectionStatus(); showToast('Você está offline. Os novos cadastros serão salvos no dispositivo e sincronizados quando online.', 'info'); });
+    
+    // Inicializar IndexedDB
+    function initDatabase() {
+        return new Promise((resolve, reject) => {
+            const request = indexedDB.open(DB_NAME, DB_VERSION);
+            request.onerror = (e) => reject(e);
+            request.onsuccess = (e) => { db = e.target.result; resolve(db); };
+            request.onupgradeneeded = (e) => {
+                const db = e.target.result;
+                if (!db.objectStoreNames.contains('igrejas')) {
+                    db.createObjectStore('igrejas', { keyPath: 'id' });
+                }
+                if (!db.objectStoreNames.contains('transacoes')) {
+                    const transStore = db.createObjectStore('transacoes', { keyPath: 'id' });
+                    transStore.createIndex('igrejaId', 'igrejaId');
+                }
+                if (!db.objectStoreNames.contains('categorias')) {
+                    const catStore = db.createObjectStore('categorias', { keyPath: 'id' });
+                    catStore.createIndex('igrejaId', 'igrejaId');
+                }
+                if (!db.objectStoreNames.contains('formasPagamento')) {
+                    const fpStore = db.createObjectStore('formasPagamento', { keyPath: 'id' });
+                    fpStore.createIndex('igrejaId', 'igrejaId');
+                }
+                if (!db.objectStoreNames.contains('config')) {
+                    db.createObjectStore('config', { keyPath: 'chave' });
+                }
+            };
+        });
+    }
+    
+    async function salvarItens(storeName, igrejaId, lista, mapFunc = (item, idx) => ({ ...item, id: `${igrejaId}_${Date.now()}_${idx}` })) {
+        return new Promise((resolve, reject) => {
+            const tx = db.transaction([storeName], 'readwrite');
+            const store = tx.objectStore(storeName);
+            const index = store.index('igrejaId');
+            const range = IDBKeyRange.only(igrejaId);
+            const cursorReq = index.openCursor(range);
+            cursorReq.onsuccess = (e) => {
+                const cursor = e.target.result;
+                if (cursor) { store.delete(cursor.primaryKey); cursor.continue(); }
+            };
+            tx.oncomplete = () => {
+                const tx2 = db.transaction([storeName], 'readwrite');
+                const store2 = tx2.objectStore(storeName);
+                lista.forEach((item, idx) => {
+                    let id = item.id;
+                    if (!id) id = `${igrejaId}_${Date.now()}_${idx}`;
+                    store2.put({ ...item, id, igrejaId });
+                });
+                tx2.oncomplete = () => resolve();
+                tx2.onerror = (e) => reject(e);
+            };
+            tx.onerror = (e) => reject(e);
+        });
+    }
+    
+    async function carregarItens(storeName, igrejaId, mapper = (x) => x) {
+        return new Promise((resolve, reject) => {
+            const tx = db.transaction([storeName], 'readonly');
+            const store = tx.objectStore(storeName);
+            const index = store.index('igrejaId');
+            const req = index.getAll(IDBKeyRange.only(igrejaId));
+            req.onsuccess = () => resolve(req.result.map(mapper));
+            req.onerror = (e) => reject(e);
+        });
+    }
+    
+    async function salvarTransacoes(igrejaId, lista) { return salvarItens('transacoes', igrejaId, lista, (t, i) => ({ ...t, id: t.id || `${igrejaId}_trans_${Date.now()}_${i}` })); }
+    async function carregarTransacoes(igrejaId) { return carregarItens('transacoes', igrejaId, x => x); }
+    async function salvarCategorias(igrejaId, lista) { return salvarItens('categorias', igrejaId, lista, (c, i) => ({ nome: c.nome, tipo: c.tipo, id: c.id || `${igrejaId}_cat_${Date.now()}_${i}` })); }
+    async function carregarCategorias(igrejaId) { const items = await carregarItens('categorias', igrejaId, x => ({ nome: x.nome, tipo: x.tipo, id: x.id })); return items; }
+    async function salvarFormasPagamento(igrejaId, lista) { return salvarItens('formasPagamento', igrejaId, lista, (f, i) => ({ nome: f.nome, id: f.id || `${igrejaId}_fp_${Date.now()}_${i}` })); }
+    async function carregarFormasPagamento(igrejaId) { const items = await carregarItens('formasPagamento', igrejaId, x => ({ nome: x.nome, id: x.id })); return items.map(f => f.nome); }
+    
+    async function salvarContas(contas) {
+        return new Promise((resolve, reject) => {
+            const tx = db.transaction(['igrejas'], 'readwrite');
+            const store = tx.objectStore('igrejas');
+            store.clear();
+            contas.forEach(i => store.put(i));
+            tx.oncomplete = () => { todasContas = contas; resolve(); };
+            tx.onerror = (e) => reject(e);
+        });
+    }
+    async function carregarContas() {
+        return new Promise((resolve, reject) => {
+            const tx = db.transaction(['igrejas'], 'readonly');
+            const store = tx.objectStore('igrejas');
+            const req = store.getAll();
+            req.onsuccess = () => resolve(req.result || []);
+            req.onerror = (e) => reject(e);
+        });
+    }
+    
+    async function carregarConfigMaster() {
+        return new Promise((resolve) => {
+            const tx = db.transaction(['config'], 'readonly');
+            const store = tx.objectStore('config');
+            const req = store.get('masterSenha');
+            req.onsuccess = () => {
+                if (req.result) MASTER_SENHA = req.result.valor;
+                resolve();
+            };
+            req.onerror = () => resolve();
+        });
+    }
+    async function salvarConfigMaster(senha) {
+        return new Promise((resolve) => {
+            const tx = db.transaction(['config'], 'readwrite');
+            const store = tx.objectStore('config');
+            store.put({ chave: 'masterSenha', valor: senha });
+            tx.oncomplete = () => resolve();
+        });
+    }
+    
+    function showLoading(msg) {
+        let loading = document.querySelector('.loading-overlay');
+        if (!loading) {
+            loading = document.createElement('div');
+            loading.className = 'loading-overlay';
+            loading.innerHTML = `<div class="loading-content"><i class="fas fa-spinner fa-pulse fa-2x"></i><p>${msg}</p></div>`;
+            document.body.appendChild(loading);
+        } else { loading.querySelector('p').innerHTML = msg; loading.style.display = 'flex'; }
+    }
+    function hideLoading() { const loading = document.querySelector('.loading-overlay'); if (loading) loading.style.display = 'none'; }
+    
+    // Login
+    async function fazerLogin(identificador, senha) {
+        if (identificador === 'MASTER') {
+            if (senha === MASTER_SENHA) {
+                usuarioLogado = { id: 'master', nome: 'Administrador Master', isMaster: true };
+                contaAtual = null;
+                return { sucesso: true, isMaster: true };
+            } else { return { sucesso: false, mensagem: 'Senha master incorreta!' }; }
+        }
+        const contas = await carregarContas();
+        const conta = contas.find(i => i.id == identificador);
+        if (!conta) return { sucesso: false, mensagem: 'Conta não encontrada!' };
+        if (conta.senha !== senha) return { sucesso: false, mensagem: 'Senha incorreta!' };
+        
+        contaAtual = conta;
+        usuarioLogado = { id: conta.id, nome: conta.nome, isMaster: false };
+        transacoes = await carregarTransacoes(conta.id);
+        categorias = await carregarCategorias(conta.id);
+        if (categorias.length === 0) {
+            categorias = [
+                { nome: "Dízimos", tipo: "receita" }, { nome: "Ofertas", tipo: "receita" },
+                { nome: "Eventos", tipo: "ambos" }, { nome: "Manutenção", tipo: "despesa" },
+                { nome: "Salários", tipo: "despesa" }, { nome: "Material", tipo: "despesa" },
+                { nome: "Missões", tipo: "receita" }
+            ];
+            await salvarCategorias(conta.id, categorias);
+        }
+        let formas = await carregarFormasPagamento(conta.id);
+        if (formas.length === 0) formas = ["Dinheiro", "PIX", "Cartão", "Transferência"];
+        formasPagamento = formas;
+        await salvarFormasPagamento(conta.id, formasPagamento.map(n => ({ nome: n })));
+        return { sucesso: true, isMaster: false, conta: conta };
+    }
+    
+    async function carregarListaContasLogin() {
+        const select = document.getElementById('loginContaSelect');
+        if (!select) return;
+        const contas = await carregarContas();
+        select.innerHTML = '<option value="">Selecione uma conta</option><option value="MASTER">--- ADMINISTRADOR MASTER ---</option>';
+        contas.forEach(conta => { const opt = document.createElement('option'); opt.value = conta.id; opt.textContent = conta.nome; select.appendChild(opt); });
+    }
+    
+    async function carregarDadosConta() {
+        if (!contaAtual) return;
+        document.getElementById('contaNomeHeader').innerHTML = contaAtual.nome;
+        document.getElementById('usuarioLogadoLabel').innerHTML = `${contaAtual.nome} <i class="fas fa-check-circle"></i>`;
+        const tabContas = document.getElementById('tabContasBtn');
+        const painelContas = document.getElementById('contas');
+        if (tabContas && !usuarioLogado?.isMaster) tabContas.remove();
+        if (painelContas && !usuarioLogado?.isMaster) painelContas.remove();
+        await atualizarInterface();
+    }
+    
+    function limparFormularioLancamento() {
+        document.getElementById('valorTransacao').value = '';
+        document.getElementById('descTransacao').value = '';
+        document.getElementById('dataTransacao').value = '';
+        document.getElementById('tipoTransacao').value = 'receita';
+        if (document.getElementById('categoriaSelect').options.length > 0) {
+            document.getElementById('categoriaSelect').selectedIndex = 0;
+        }
+        if (document.getElementById('formaPagamento').options.length > 0) {
+            document.getElementById('formaPagamento').selectedIndex = 0;
+        }
+        editandoId = null;
+        document.getElementById('formTitle').innerHTML = '<i class="fas fa-plus-circle"></i> Novo Lançamento';
+        document.getElementById('salvarTransacao').innerHTML = '<i class="fas fa-save"></i> Salvar';
+        document.getElementById('cancelarEdicao').style.display = 'none';
+    }
+
+    function recriarGraficos() {
+        if (!contaAtual) return;
+        const meses = ['Jan','Fev','Mar','Abr','Mai','Jun','Jul','Ago','Set','Out','Nov','Dez'];
+        let recMensal = new Array(12).fill(0);
+        let despMensal = new Array(12).fill(0);
+        transacoes.forEach(t => { const mes = new Date(t.data).getMonth(); if (t.tipo === 'receita') recMensal[mes] += t.valor; else despMensal[mes] += t.valor; });
+        const ctxBar = document.getElementById('graficoMensal')?.getContext('2d');
+        if (ctxBar) { if (window.graficoBarra) window.graficoBarra.destroy(); window.graficoBarra = new Chart(ctxBar, { type: 'bar', data: { labels: meses, datasets: [{ label: 'Receitas', data: recMensal, backgroundColor: '#10b981' }, { label: 'Despesas', data: despMensal, backgroundColor: '#ef4444' }] } }); }
+        
+        let despCat = {};
+        transacoes.filter(t => t.tipo === 'despesa').forEach(t => { despCat[t.categoria] = (despCat[t.categoria] || 0) + t.valor; });
+        const ctxPizza = document.getElementById('graficoPizza')?.getContext('2d');
+        if (ctxPizza) {
+            if (window.graficoPizza) window.graficoPizza.destroy();
+            if (Object.keys(despCat).length === 0) {
+                window.graficoPizza = new Chart(ctxPizza, {
+                    type: 'pie',
+                    data: { labels: ['Nenhuma despesa'], datasets: [{ data: [1], backgroundColor: ['#e5e7eb'] }] },
+                    options: { plugins: { tooltip: { callbacks: { label: () => 'Sem dados' } }, legend: { display: false } } }
+                });
+                const originalDraw = window.graficoPizza.draw;
+                window.graficoPizza.draw = function() {
+                    originalDraw.apply(this, arguments);
+                    const ctx = this.ctx;
+                    const width = this.width;
+                    const height = this.height;
+                    ctx.save();
+                    ctx.font = 'bold 14px "Segoe UI"';
+                    ctx.fillStyle = '#6b7280';
+                    ctx.textAlign = 'center';
+                    ctx.fillText('Nenhuma despesa registrada', width/2, height/2);
+                    ctx.restore();
+                };
+                window.graficoPizza.draw();
+            } else {
+                const cores = ['#f59e0b','#ef4444','#8b5cf6','#10b981','#3b82f6','#ec4899','#06b6d4','#84cc16','#f97316','#d946ef'];
+                const labels = Object.keys(despCat);
+                const valores = Object.values(despCat);
+                const bgColors = labels.map((_, i) => cores[i % cores.length]);
+                window.graficoPizza = new Chart(ctxPizza, { type: 'pie', data: { labels: labels, datasets: [{ data: valores, backgroundColor: bgColors }] }, options: { responsive: true, maintainAspectRatio: true } });
+            }
+        }
+    }
+    
+    async function atualizarInterface() {
+        if (usuarioLogado?.isMaster) {
+            document.getElementById('totalReceitas').innerHTML = 'R$ 0,00';
+            document.getElementById('totalDespesas').innerHTML = 'R$ 0,00';
+            document.getElementById('saldoTotal').innerHTML = 'R$ 0,00';
+            document.getElementById('categoriaSelect').innerHTML = '<option>Nenhuma conta selecionada</option>';
+            document.querySelector('#tabelaTransacoes tbody').innerHTML = '<tr><td colspan="6">Modo Administrador - Selecione uma conta para ver dados</td></tr>';
+            document.getElementById('listaCategorias').innerHTML = '<p>Modo Administrador</p>';
+            document.querySelector('#ultimasTransacoes tbody').innerHTML = '<tr><td colspan="4">Modo Administrador</td></tr>';
+            document.getElementById('listaFormasPagamento').innerHTML = '';
+            await renderizarListaContasAdmin();
+            return;
+        }
+        if (!contaAtual) return;
+        
+        let totalRec = 0, totalDesp = 0;
+        transacoes.forEach(t => { if (t.tipo === 'receita') totalRec += t.valor; else totalDesp += t.valor; });
+        document.getElementById('totalReceitas').innerHTML = `R$ ${totalRec.toFixed(2)}`;
+        document.getElementById('totalDespesas').innerHTML = `R$ ${totalDesp.toFixed(2)}`;
+        document.getElementById('saldoTotal').innerHTML = `R$ ${(totalRec - totalDesp).toFixed(2)}`;
+        
+        const catSelect = document.getElementById('categoriaSelect');
+        if (catSelect) {
+            catSelect.innerHTML = '';
+            categorias.forEach(c => { const opt = document.createElement('option'); opt.value = c.nome; opt.textContent = `${c.nome} (${c.tipo})`; catSelect.appendChild(opt); });
+            if (catSelect.options.length > 0) catSelect.selectedIndex = 0;
+        }
+        const fpSelect = document.getElementById('formaPagamento');
+        if (fpSelect) {
+            fpSelect.innerHTML = '';
+            formasPagamento.forEach(fp => { const opt = document.createElement('option'); opt.value = fp; opt.textContent = fp; fpSelect.appendChild(opt); });
+            if (fpSelect.options.length > 0) fpSelect.selectedIndex = 0;
+        }
+        
+        const tbody = document.querySelector('#tabelaTransacoes tbody');
+        if (tbody) {
+            tbody.innerHTML = '';
+            [...transacoes].reverse().forEach(t => {
+                const row = tbody.insertRow();
+                row.insertCell(0).textContent = t.data;
+                row.insertCell(1).innerHTML = `<span class="badge ${t.tipo === 'receita' ? 'badge-receita' : 'badge-despesa'}">${t.tipo === 'receita' ? 'Receita' : 'Despesa'}</span>`;
+                row.insertCell(2).textContent = t.categoria;
+                row.insertCell(3).textContent = t.descricao || '-';
+                row.insertCell(4).textContent = `R$ ${t.valor.toFixed(2)}`;
+                const acoes = row.insertCell(5);
+                const btnEdit = document.createElement('button');
+                btnEdit.innerHTML = '<i class="fas fa-edit"></i>';
+                btnEdit.className = 'edit-btn small-btn';
+                btnEdit.style.background = '#f59e0b';
+                btnEdit.onclick = () => editarTransacao(t);
+                const btnDel = document.createElement('button');
+                btnDel.innerHTML = '<i class="fas fa-trash"></i>';
+                btnDel.style.background = '#dc2626';
+                btnDel.className = 'small-btn';
+                btnDel.onclick = async () => { if(confirm('Excluir transação?')) { transacoes = transacoes.filter(x => x.id !== t.id); await salvarTransacoes(contaAtual.id, transacoes); await atualizarInterface(); showToast('Transação excluída localmente.', 'success'); } };
+                acoes.appendChild(btnEdit);
+                acoes.appendChild(btnDel);
+            });
+        }
+        
+        const catContainer = document.getElementById('listaCategorias');
+        if (catContainer) {
+            catContainer.innerHTML = '<h4>📌 Categorias</h4>';
+            categorias.forEach((c, idx) => {
+                const div = document.createElement('div'); div.className = 'categoria-item';
+                div.innerHTML = `<span><strong>${c.nome}</strong> (${c.tipo})</span> <button onclick="excluirCategoria(${idx})" style="background:#ef4444;">✖️</button>`;
+                catContainer.appendChild(div);
+            });
+        }
+        const fpContainer = document.getElementById('listaFormasPagamento');
+        if (fpContainer) {
+            fpContainer.innerHTML = '<h4>💳 Formas de Pagamento</h4>';
+            formasPagamento.forEach((fp, idx) => {
+                const div = document.createElement('div'); div.className = 'forma-item';
+                div.innerHTML = `<span><strong>${fp}</strong></span> <button onclick="excluirFormaPagamento(${idx})" style="background:#ef4444;">✖️</button>`;
+                fpContainer.appendChild(div);
+            });
+        }
+        
+        recriarGraficos();
+        
+        const ultimasTbody = document.querySelector('#ultimasTransacoes tbody');
+        if (ultimasTbody) {
+            ultimasTbody.innerHTML = '';
+            transacoes.slice(-5).reverse().forEach(t => { const row = ultimasTbody.insertRow(); row.insertCell(0).textContent = t.data; row.insertCell(1).textContent = t.descricao || t.categoria; row.insertCell(2).textContent = t.categoria; row.insertCell(3).innerHTML = `<strong>R$ ${t.valor.toFixed(2)}</strong>`; });
+        }
+        document.getElementById('storageInfo').innerHTML = `<p><i class="fas fa-database"></i> <strong>Status:</strong> ${transacoes.length} transações | ${categorias.length} categorias | ${formasPagamento.length} formas de pagamento</p>`;
+    }
+    
+    function editarTransacao(transacao) {
+        editandoId = transacao.id;
+        document.getElementById('tipoTransacao').value = transacao.tipo;
+        document.getElementById('categoriaSelect').value = transacao.categoria;
+        document.getElementById('valorTransacao').value = transacao.valor;
+        document.getElementById('dataTransacao').value = transacao.data;
+        document.getElementById('descTransacao').value = transacao.descricao || '';
+        document.getElementById('formaPagamento').value = transacao.formaPagamento || formasPagamento[0];
+        document.getElementById('formTitle').innerHTML = '<i class="fas fa-edit"></i> Editar Lançamento';
+        document.getElementById('salvarTransacao').innerHTML = '<i class="fas fa-save"></i> Atualizar';
+        document.getElementById('cancelarEdicao').style.display = 'inline-block';
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+    
+    // Admin: contas
+    async function adicionarContaAdmin(nome, senha, endereco = '') {
+        if (!nome.trim()) return alert('Digite o nome da conta');
+        if (!senha || senha.length < 3) return alert('A senha deve ter pelo menos 3 caracteres');
+        const contas = await carregarContas();
+        if (contas.find(i => i.nome === nome)) return alert('Já existe uma conta com este nome');
+        const novaId = Date.now();
+        const novaConta = { id: novaId, nome: nome.trim(), senha: senha, endereco: endereco || '', dataCriacao: new Date().toISOString() };
+        contas.push(novaConta);
+        await salvarContas(contas);
+        const categoriasPadrao = [ { nome: "Dízimos", tipo: "receita" }, { nome: "Ofertas", tipo: "receita" }, { nome: "Eventos", tipo: "ambos" }, { nome: "Manutenção", tipo: "despesa" }, { nome: "Salários", tipo: "despesa" }, { nome: "Material", tipo: "despesa" } ];
+        await salvarCategorias(novaId, categoriasPadrao);
+        await salvarFormasPagamento(novaId, ["Dinheiro", "PIX", "Cartão", "Transferência"].map(n => ({ nome: n })));
+        await renderizarListaContasAdmin();
+        await carregarListaContasLogin();
+        alert(`✅ Conta "${nome}" criada! Senha: ${senha}`);
+    }
+    
+    async function renderizarListaContasAdmin() {
+        const container = document.getElementById('listaContas');
+        if (!container) return;
+        const contas = await carregarContas();
+        container.innerHTML = '<h4>📋 Contas Cadastradas</h4>';
+        for (const conta of contas) {
+            const transCount = (await carregarTransacoes(conta.id)).length;
+            const div = document.createElement('div'); div.className = 'categoria-item'; div.style.display = 'flex'; div.style.justifyContent = 'space-between'; div.style.width = '100%'; div.style.flexWrap = 'wrap';
+            div.innerHTML = `<div><strong>🏛️ ${conta.nome}</strong><br><small>🔐 Senha: ${conta.senha} | 📍 ${conta.endereco || 'Sem endereço'}</small><br><small>💰 ${transCount} transações</small></div>
+                <div><button onclick="editarSenhaConta(${conta.id})" style="background:#3b82f6; margin-right:5px;"><i class="fas fa-key"></i> Alterar Senha</button>
+                <button onclick="excluirContaAdmin(${conta.id})" style="background:#dc2626;"><i class="fas fa-trash"></i> Excluir</button></div>`;
+            container.appendChild(div);
+        }
+    }
+    window.editarSenhaConta = async function(id) { const novaSenha = prompt('Digite a nova senha:'); if(!novaSenha || novaSenha.length<3) return; const contas = await carregarContas(); const idx = contas.findIndex(i=>i.id===id); if(idx!==-1){ contas[idx].senha=novaSenha; await salvarContas(contas); await renderizarListaContasAdmin(); await carregarListaContasLogin(); alert('✅ Senha alterada!'); } };
+    window.excluirContaAdmin = async function(id) { const contas = await carregarContas(); if(contas.length<=1) return alert('Não é possível excluir a única conta'); if(confirm('Excluir esta conta e TODOS os seus dados?')) { await salvarContas(contas.filter(i=>i.id!==id)); const tx = db.transaction(['transacoes','categorias','formasPagamento'],'readwrite'); for(let store of ['transacoes','categorias','formasPagamento']){ const s = tx.objectStore(store); const idxStore = s.index('igrejaId'); idxStore.openCursor(IDBKeyRange.only(id)).onsuccess = (e) => { const c = e.target.result; if(c) { s.delete(c.primaryKey); c.continue(); } }; } await renderizarListaContasAdmin(); await carregarListaContasLogin(); alert('✅ Conta excluída!'); } };
+    
+    window.excluirCategoria = async function(idx) { if (!contaAtual) return; const nome = categorias[idx].nome; if (transacoes.some(t => t.categoria === nome)) alert('❌ Não pode excluir: há transações vinculadas'); else { categorias.splice(idx,1); await salvarCategorias(contaAtual.id, categorias); await atualizarInterface(); showToast('Categoria removida localmente.', 'success'); } };
+    window.excluirFormaPagamento = async function(idx) { if (!contaAtual) return; const fp = formasPagamento[idx]; formasPagamento.splice(idx,1); await salvarFormasPagamento(contaAtual.id, formasPagamento.map(n=>({nome:n}))); await atualizarInterface(); showToast('Forma de pagamento removida.', 'success'); };
+    
+    function gerarRelatorio(mes, ano) {
+        if(!transacoes) return;
+        const filtradas = transacoes.filter(t=>{ const d=new Date(t.data); return d.getMonth()+1===mes && d.getFullYear()===ano; });
+        let rec=0, desp=0;
+        let receitasPorCat = {};
+        let despesasPorCat = {};
+        filtradas.forEach(t => {
+            if (t.tipo === 'receita') {
+                rec += t.valor;
+                receitasPorCat[t.categoria] = (receitasPorCat[t.categoria] || 0) + t.valor;
+            } else {
+                desp += t.valor;
+                despesasPorCat[t.categoria] = (despesasPorCat[t.categoria] || 0) + t.valor;
+            }
+        });
+        
+        let html = `<h4>📊 Relatório - ${mes}/${ano} - ${contaAtual?.nome}</h4>`;
+        html += `<h5>📋 Lista de Transações</h5><table style="width:100%; border-collapse:collapse; border:1px solid #ddd;">
+            <thead><tr style="background:#064e3b; color:white;"><th style="padding:10px;">Data</th><th>Tipo</th><th>Categoria</th><th>Descrição</th><th>Valor</th></tr></thead><tbody>`;
+        if(filtradas.length===0) html+=`<tr><td colspan="5" style="text-align:center; padding:40px;">📭 Nenhuma transação encontrada</td></tr>`;
+        else filtradas.forEach(t=>{ 
+            html+=`<tr>
+                <td style="padding:8px;">${t.data}</td>
+                <td>${t.tipo==='receita'?'💰 Receita':'📉 Despesa'}</td>
+                <td>${t.categoria}</td>
+                <td>${t.descricao || '-'}</td>
+                <td>R$ ${t.valor.toFixed(2)}</td>
+             </tr>`; 
+        });
+        html+=`</tbody>}</table>`;
+        html += `<h5>📈 Receitas por Categoria</h5><table style="width:100%; border-collapse:collapse; border:1px solid #ddd;">
+            <thead><tr style="background:#10b981; color:white;"><th>Categoria</th><th>Valor</th></tr></thead><tbody>`;
+        if (Object.keys(receitasPorCat).length === 0) html+=`<tr><td colspan="2">Nenhuma receita no período</td></tr>`;
+        else { for (let [cat, val] of Object.entries(receitasPorCat)) { html+=`<tr><td>${cat}</td><td>R$ ${val.toFixed(2)}</td></tr>`; } }
+        html+=`</tbody>}</table>`;
+        html += `<h5>📉 Despesas por Categoria</h5><table style="width:100%; border-collapse:collapse; border:1px solid #ddd;">
+            <thead><tr style="background:#ef4444; color:white;"><th>Categoria</th><th>Valor</th></tr></thead><tbody>`;
+        if (Object.keys(despesasPorCat).length === 0) html+=`<tr><td colspan="2">Nenhuma despesa no período</td></tr>`;
+        else { for (let [cat, val] of Object.entries(despesasPorCat)) { html+=`<tr><td>${cat}</td><td>R$ ${val.toFixed(2)}</td></tr>`; } }
+        html+=`</tbody>}</table>`;
+        html+=`<div style="margin-top:20px; padding:10px; background:#f3f4f6; border-radius:10px;">
+            <strong>Totais:</strong> Receitas: R$ ${rec.toFixed(2)} | Despesas: R$ ${desp.toFixed(2)} | Saldo: R$ ${(rec-desp).toFixed(2)}
+        </div>`;
+        html+=`<div style="margin-top:20px; text-align:right; font-size:12px;">Gerado em ${new Date().toLocaleString()}</div>`;
+        document.getElementById('conteudoRelatorio').innerHTML = html;
+    }
+    
+    // Backup completo
+    async function exportarBackup() {
+        const contas = await carregarContas();
+        const todasTransacoes = [];
+        const todasCategorias = [];
+        const todasFormas = [];
+        for (const conta of contas) {
+            const trans = await carregarTransacoes(conta.id);
+            const cats = await carregarCategorias(conta.id);
+            const formas = await carregarFormasPagamento(conta.id);
+            todasTransacoes.push(...trans);
+            todasCategorias.push(...cats);
+            todasFormas.push(...formas.map(f => ({ ...f, igrejaId: conta.id })));
+        }
+        const backup = { igrejas: contas, transacoes: todasTransacoes, categorias: todasCategorias, formasPagamento: todasFormas, data: new Date().toISOString(), versao: '4.0' };
+        const blob = new Blob([JSON.stringify(backup)], { type: 'application/json' });
+        const link = document.createElement('a'); link.href = URL.createObjectURL(blob); link.download = `backup_completo_${new Date().toISOString().slice(0,10)}.json`; link.click(); URL.revokeObjectURL(link.href); showToast('✅ Backup completo gerado!', 'success');
+    }
+    async function restaurarBackup(file) {
+        const reader = new FileReader();
+        reader.onload = async (e) => {
+            try {
+                const data = JSON.parse(e.target.result);
+                if (!data.igrejas) throw new Error('Formato inválido');
+                const tx = db.transaction(['igrejas','transacoes','categorias','formasPagamento'], 'readwrite');
+                tx.objectStore('igrejas').clear();
+                tx.objectStore('transacoes').clear();
+                tx.objectStore('categorias').clear();
+                tx.objectStore('formasPagamento').clear();
+                await tx.done;
+                for (const conta of data.igrejas) await salvarContas(data.igrejas);
+                for (const trans of data.transacoes || []) { const store = db.transaction(['transacoes'],'readwrite').objectStore('transacoes'); store.put(trans); }
+                for (const cat of data.categorias || []) { const store = db.transaction(['categorias'],'readwrite').objectStore('categorias'); store.put(cat); }
+                for (const fp of data.formasPagamento || []) { const store = db.transaction(['formasPagamento'],'readwrite').objectStore('formasPagamento'); store.put(fp); }
+                await carregarListaContasLogin();
+                showToast('✅ Backup restaurado! Faça login novamente.', 'success');
+                logout();
+            } catch(err) { alert('Erro ao restaurar: '+err.message); }
+        };
+        reader.readAsText(file);
+    }
+    
+    function logout() { usuarioLogado = null; contaAtual = null; transacoes = []; categorias = []; document.getElementById('appContent').style.display = 'none'; document.getElementById('loginOverlay').style.display = 'flex'; document.getElementById('loginSenha').value = ''; carregarListaContasLogin(); editandoId = null; }
+    
+    function initTabs() {
+        document.querySelectorAll('.tab-btn').forEach(btn => {
+            btn.addEventListener('click', function(e) {
+                const targetId = this.getAttribute('data-tab'); if (!targetId) return;
+                document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+                document.querySelectorAll('.panel').forEach(p => p.classList.remove('active-panel'));
+                this.classList.add('active');
+                const targetPanel = document.getElementById(targetId); if (targetPanel) targetPanel.classList.add('active-panel');
+                if (targetId === 'contas' && usuarioLogado?.isMaster) renderizarListaContasAdmin();
+                if (targetId === 'dashboard' && !usuarioLogado?.isMaster && contaAtual) setTimeout(() => recriarGraficos(), 50);
+            });
+        });
+    }
+    
+    // Recarregar dados manuais
+    async function recarregarDados() {
+        if (!contaAtual && !usuarioLogado?.isMaster) { showToast('Nenhuma conta selecionada.', 'error'); return; }
+        if (usuarioLogado?.isMaster) { await atualizarInterface(); showToast('Dados do modo master recarregados.', 'success'); return; }
+        showLoading('Recarregando informações...');
+        transacoes = await carregarTransacoes(contaAtual.id);
+        categorias = await carregarCategorias(contaAtual.id);
+        formasPagamento = await carregarFormasPagamento(contaAtual.id);
+        await atualizarInterface();
+        hideLoading();
+        showToast('Informações recarregadas do banco local.', 'success');
+    }
+    
+    // Importar backup rápido
+    function importarBackupRapido() {
+        const input = document.createElement('input');
+        input.type = 'file';
+        input.accept = '.json';
+        input.onchange = (e) => { if(e.target.files[0]) restaurarBackup(e.target.files[0]); };
+        input.click();
+    }
+    
+    // Relatório Avançado sem assinaturas
+    function relatorioAvancadoComImpressao() {
+        if(!contaAtual) return;
+        const ano = prompt('Ano:', new Date().getFullYear());
+        if(!ano) return;
+        const meses = ['Jan','Fev','Mar','Abr','Mai','Jun','Jul','Ago','Set','Out','Nov','Dez'];
+        let html = `<h3>Relatório Avançado ${ano} - ${contaAtual?.nome}</h3>
+                    <table border="1" style="width:100%; border-collapse: collapse;">
+                        <thead>
+                            <tr style="background:#064e3b;color:white">
+                                <th style="padding:10px;">Mês</th>
+                                <th>Receitas</th>
+                                <th>Despesas</th>
+                                <th>Saldo</th>
+                             </tr>
+                        </thead>
+                        <tbody>`;
+        let totalR=0,totalD=0;
+        for(let i=0;i<12;i++){
+            let rec=0,desp=0;
+            transacoes.forEach(t=>{ 
+                const d=new Date(t.data); 
+                if(d.getFullYear()==ano && d.getMonth()==i){ 
+                    if(t.tipo==='receita') rec+=t.valor; 
+                    else desp+=t.valor; 
+                } 
+            });
+            totalR+=rec;
+            totalD+=desp;
+            html+=`<tr>
+                        <td style="padding:8px;">${meses[i]}</td>
+                        <td>R$ ${rec.toFixed(2)}</td>
+                        <td>R$ ${desp.toFixed(2)}</td>
+                        <td style="color:${rec-desp>=0?'green':'red'}">R$ ${(rec-desp).toFixed(2)}</td>
+                     </tr>`;
+        }
+        html+=`<tr style="font-weight:bold; background:#f3f4f6;">
+                    <td>TOTAL</td>
+                    <td>R$ ${totalR.toFixed(2)}</td>
+                    <td>R$ ${totalD.toFixed(2)}</td>
+                    <td>R$ ${(totalR-totalD).toFixed(2)}</td>
+                 </tr>
+            </tbody>
+         </table>`;
+        
+        // Criar modal com botões Fechar e Imprimir
+        const modal = document.createElement('div');
+        modal.style.cssText = 'position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.8);z-index:100000;display:flex;align-items:center;justify-content:center';
+        modal.innerHTML = `
+            <div style="background:white;padding:30px;border-radius:20px;max-width:90%;max-height:90%;overflow:auto;width:100%;max-width:900px;">
+                <div style="display:flex;justify-content:space-between;margin-bottom:20px;gap:10px;flex-wrap:wrap;">
+                    <h3>Relatório Avançado ${ano}</h3>
+                    <div style="display:flex;gap:10px;">
+                        <button id="imprimirRelatorioAvancado" style="background:#3b82f6;"><i class="fas fa-print"></i> Imprimir</button>
+                        <button id="fecharRelatorioAvancado" style="background:#dc2626;"><i class="fas fa-times"></i> Fechar</button>
+                    </div>
+                </div>
+                <div id="conteudoRelatorioAvancado" style="font-family: Arial, sans-serif;">${html}</div>
+            </div>
+        `;
+        document.body.appendChild(modal);
+        
+        document.getElementById('imprimirRelatorioAvancado').onclick = () => {
+            const conteudo = document.getElementById('conteudoRelatorioAvancado').innerHTML;
+            const win = window.open('', '_blank');
+            win.document.write(`<html>
+                <head>
+                    <title>Relatório Avançado ${ano} - ${contaAtual?.nome}</title>
+                    <style>
+                        * { margin: 0; padding: 0; box-sizing: border-box; }
+                        body { 
+                            font-family: Arial, sans-serif; 
+                            padding: 20px; 
+                            margin: 0;
+                            position: relative;
+                            min-height: 100vh;
+                        }
+                        table { 
+                            border-collapse: collapse; 
+                            width: 100%; 
+                            margin-bottom: 20px;
+                        }
+                        th, td { 
+                            border: 1px solid #ddd; 
+                            padding: 8px; 
+                        }
+                        th { 
+                            background: #064e3b; 
+                            color: white; 
+                        }
+                        @media print {
+                            body { 
+                                margin: 0; 
+                                padding: 20px;
+                            }
+                            button { display: none; }
+                            @page {
+                                margin: 2cm;
+                            }
+                        }
+                    </style>
+                </head>
+                <body>
+                    ${conteudo}
+                    <script>
+                        window.print();
+                        setTimeout(() => window.close(), 1000);
+                    <\/script>
+                </body>
+            </html>`);
+            win.document.close();
+        };
+        
+        document.getElementById('fecharRelatorioAvancado').onclick = () => modal.remove();
+    }
+    
+    // Exportar PDF com margens adequadas para mobile
+    async function exportarPDFComMargens() {
+        const c = document.getElementById('conteudoRelatorio').innerHTML;
+        if(!c) {
+            showToast('Gere um relatório primeiro!', 'error');
+            return;
+        }
+        showLoading('Gerando PDF...');
+        try {
+            const element = document.createElement('div');
+            element.innerHTML = `<div style="padding:20px; margin:0; width:100%;"><h1 style="color:#064e3b;">${contaAtual?.nome || 'IMPÉRIO FERNANDES'}</h1>${c}</div>`;
+            element.style.margin = '0';
+            element.style.padding = '0';
+            
+            const opt = {
+                margin: [0.5, 0.5, 0.5, 0.5],
+                filename: `relatorio_${new Date().toISOString().slice(0,10)}.pdf`,
+                image: { type: 'jpeg', quality: 0.98 },
+                html2canvas: { scale: 2, useCORS: true, logging: false },
+                jsPDF: { unit: 'in', format: 'a4', orientation: 'portrait' }
+            };
+            await html2pdf().set(opt).from(element).save();
+            hideLoading();
+            showToast('PDF gerado com sucesso!', 'success');
+        } catch(err) {
+            hideLoading();
+            showToast('Erro ao gerar PDF: ' + err.message, 'error');
+        }
+    }
+    
+    // Eventos e inicialização
+    document.getElementById('loginBtn').onclick = async () => {
+        const identificador = document.getElementById('loginContaSelect').value;
+        const senha = document.getElementById('loginSenha').value;
+        if (!identificador) { document.getElementById('loginError').innerHTML = 'Selecione uma conta ou o administrador master!'; return; }
+        showLoading('Autenticando...');
+        const result = await fazerLogin(identificador, senha);
+        hideLoading();
+        if (result.sucesso) {
+            document.getElementById('loginOverlay').style.display = 'none';
+            document.getElementById('appContent').style.display = 'block';
+            if (result.isMaster) {
+                document.getElementById('contaNomeHeader').innerHTML = 'Painel Master';
+                document.getElementById('usuarioLogadoLabel').innerHTML = 'Administrador Master <i class="fas fa-crown"></i>';
+                await atualizarInterface();
+            } else { await carregarDadosConta(); }
+            document.querySelector('.tab-btn[data-tab="dashboard"]').click();
+            limparFormularioLancamento();
+            updateConnectionStatus();
+        } else { document.getElementById('loginError').innerHTML = result.mensagem; }
+    };
+    document.getElementById('logoutBtn').onclick = logout;
+    document.getElementById('salvarTransacao').onclick = async () => {
+        if (!contaAtual) return alert('Selecione uma conta');
+        const valor = parseFloat(document.getElementById('valorTransacao').value);
+        const data = document.getElementById('dataTransacao').value;
+        if (isNaN(valor) || !data) return alert('Preencha valor e data');
+        const novaTransacao = { id: editandoId || Date.now(), igrejaId: contaAtual.id, tipo: document.getElementById('tipoTransacao').value, categoria: document.getElementById('categoriaSelect').value, valor, data, descricao: document.getElementById('descTransacao').value, formaPagamento: document.getElementById('formaPagamento').value };
+        if (editandoId) { transacoes = transacoes.map(t => t.id === editandoId ? novaTransacao : t); editandoId = null; } else { transacoes.push(novaTransacao); }
+        await salvarTransacoes(contaAtual.id, transacoes);
+        await atualizarInterface();
+        limparFormularioLancamento();
+        showToast('✅ Transação salva localmente' + (navigator.onLine ? '' : ' (offline, sincronizará depois)'), 'success');
+    };
+    document.getElementById('cancelarEdicao').onclick = () => { limparFormularioLancamento(); };
+    document.getElementById('adicionarCategoria').onclick = async () => { if(!contaAtual) return; const nome = document.getElementById('novaCategoriaNome').value.trim(); const tipo = document.getElementById('tipoCategoria').value; if(!nome) return; if(categorias.find(c=>c.nome===nome)) return alert('Já existe'); categorias.push({ nome, tipo }); await salvarCategorias(contaAtual.id, categorias); await atualizarInterface(); document.getElementById('novaCategoriaNome').value = ''; showToast('Categoria adicionada localmente.', 'success'); };
+    document.getElementById('adicionarFormaPagamento').onclick = async () => { if(!contaAtual) return; const nome = document.getElementById('novaFormaNome').value.trim(); if(!nome) return; if(formasPagamento.includes(nome)) return alert('Já existe'); formasPagamento.push(nome); await salvarFormasPagamento(contaAtual.id, formasPagamento.map(n=>({nome:n}))); await atualizarInterface(); document.getElementById('novaFormaNome').value = ''; showToast('Forma de pagamento adicionada.', 'success'); };
+    document.getElementById('adicionarConta').onclick = async () => { if (!usuarioLogado?.isMaster) return alert('Apenas master'); const nome = document.getElementById('novaContaNome').value.trim(); const senha = document.getElementById('novaContaSenha').value; const endereco = document.getElementById('novaContaEndereco').value; await adicionarContaAdmin(nome, senha, endereco); document.getElementById('novaContaNome').value = ''; document.getElementById('novaContaSenha').value = ''; document.getElementById('novaContaEndereco').value = ''; };
+    document.getElementById('gerarRelatorio').onclick = () => { if(!contaAtual) return alert('Selecione uma conta'); const mes = parseInt(document.getElementById('relMes').value); const ano = parseInt(document.getElementById('relAno').value); gerarRelatorio(mes, ano); };
+    document.getElementById('imprimirRelatorio').onclick = () => { const c = document.getElementById('conteudoRelatorio').innerHTML; if(!c) return; const win = window.open('','_blank'); win.document.write(`<html><head><title>Relatório</title><style>body{font-family:Arial;padding:20px}table{border-collapse:collapse;width:100%}th,td{border:1px solid #ddd;padding:8px}th{background:#064e3b;color:white}@media print{body{margin:0;padding:20px}}</style></head><body>${c}<script>window.print();<\/script></body></html>`); win.document.close(); };
+    document.getElementById('exportarPDF').onclick = exportarPDFComMargens;
+    document.getElementById('fazerBackup').onclick = exportarBackup;
+    document.getElementById('restoreFile').onchange = (e) => { if(e.target.files[0]) restaurarBackup(e.target.files[0]); e.target.value = ''; };
+    document.getElementById('btnRelatorioAvancado').onclick = relatorioAvancadoComImpressao;
+    document.getElementById('alterarSenhaMasterBtn').onclick = async () => { if(!usuarioLogado?.isMaster) return alert('Apenas master'); const nova = document.getElementById('novaSenhaMaster').value.trim(); if(!nova || nova.length<4) return alert('Senha deve ter pelo menos 4 caracteres'); MASTER_SENHA = nova; await salvarConfigMaster(nova); alert('✅ Senha master alterada! Use a nova senha no próximo login.'); document.getElementById('novaSenhaMaster').value = ''; };
+    
+    document.getElementById('recarregarDadosBtn').onclick = recarregarDados;
+    document.getElementById('importarBackupRapidoBtn').onclick = importarBackupRapido;
+    
+    (async function() {
+        await initDatabase();
+        await carregarConfigMaster();
+        let contas = await carregarContas();
+        if (contas.length === 0) { await adicionarContaAdmin('IMPÉRIO FERNANDES', 'impe2025', 'Sede - IMPÉRIO FERNANDES'); }
+        await carregarListaContasLogin();
+        initTabs();
+        hideLoading();
+        updateConnectionStatus();
+    })();
+
+    // ============================================
+    // PWA: Sistema de Instalação Nativa
+    // ============================================
+    (function setupPWA() {
+        async function generateIcon(size, bgColor = "#064e3b", iconColor = "#ffffff") {
+            return new Promise((resolve) => {
+                const canvas = document.createElement('canvas');
+                canvas.width = size;
+                canvas.height = size;
+                const ctx = canvas.getContext('2d');
+                ctx.fillStyle = bgColor;
+                ctx.beginPath();
+                if (!CanvasRenderingContext2D.prototype.roundRect) {
+                    CanvasRenderingContext2D.prototype.roundRect = function(x, y, w, h, r) {
+                        if (w < 2 * r) r = w / 2;
+                        if (h < 2 * r) r = h / 2;
+                        this.moveTo(x+r, y);
+                        this.lineTo(x+w-r, y);
+                        this.quadraticCurveTo(x+w, y, x+w, y+r);
+                        this.lineTo(x+w, y+h-r);
+                        this.quadraticCurveTo(x+w, y+h, x+w-r, y+h);
+                        this.lineTo(x+r, y+h);
+                        this.quadraticCurveTo(x, y+h, x, y+h-r);
+                        this.lineTo(x, y+r);
+                        this.quadraticCurveTo(x, y, x+r, y);
+                        return this;
+                    };
+                }
+                ctx.roundRect(0, 0, size, size, size * 0.2);
+                ctx.fill();
+                ctx.fillStyle = iconColor;
+                ctx.font = `bold ${size * 0.5}px "Segoe UI", "Font Awesome 6 Free"`;
+                ctx.textAlign = "center";
+                ctx.textBaseline = "middle";
+                ctx.fillText("⛪", size/2, size/2 - size*0.1);
+                ctx.font = `bold ${size * 0.25}px "Segoe UI"`;
+                ctx.fillStyle = "#fbbf24";
+                ctx.fillText("$", size*0.7, size*0.7);
+                canvas.toBlob(blob => {
+                    const url = URL.createObjectURL(blob);
+                    resolve({ url, size });
+                });
+            });
+        }
+
+        async function createManifest() {
+            const sizes = [72, 96, 128, 144, 192, 384, 512];
+            const icons = [];
+            for (let sz of sizes) {
+                const { url } = await generateIcon(sz);
+                icons.push({
+                    src: url,
+                    sizes: `${sz}x${sz}`,
+                    type: "image/png",
+                    purpose: "any maskable"
+                });
+            }
+            const manifest = {
+                name: "IMPÉRIO FERNANDES FINANÇAS",
+                short_name: "IF FINANÇAS",
+                description: "Sistema de Gestão Financeira para Contas",
+                start_url: "./",
+                display: "standalone",
+                theme_color: "#064e3b",
+                background_color: "#f0fdf4",
+                orientation: "portrait",
+                icons: icons
+            };
+            const manifestBlob = new Blob([JSON.stringify(manifest)], { type: "application/json" });
+            const manifestURL = URL.createObjectURL(manifestBlob);
+            const manifestLink = document.getElementById('dynamic-manifest');
+            if (manifestLink) manifestLink.href = manifestURL;
+            if (icons.length) {
+                const appleIcon = document.getElementById('apple-touch-icon');
+                if (appleIcon) appleIcon.href = icons.find(i => i.sizes === "512x512")?.src || icons[icons.length-1].src;
+            }
+        }
+
+        function registerServiceWorker() {
+            const swCode = `
+                const CACHE_NAME = 'imperio-fernandes-cache-v1';
+                const urlsToCache = [
+                    './',
+                    '${window.location.href}',
+                    'https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js',
+                    'https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js',
+                    'https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css'
+                ];
+                
+                self.addEventListener('install', event => {
+                    event.waitUntil(
+                        caches.open(CACHE_NAME).then(cache => cache.addAll(urlsToCache))
+                    );
+                });
+                
+                self.addEventListener('fetch', event => {
+                    event.respondWith(
+                        caches.match(event.request).then(response => {
+                            return response || fetch(event.request);
+                        })
+                    );
+                });
+                
+                self.addEventListener('activate', event => {
+                    event.waitUntil(
+                        caches.keys().then(keys => Promise.all(
+                            keys.map(key => {
+                                if (key !== CACHE_NAME) return caches.delete(key);
+                            })
+                        ))
+                    );
+                });
+            `;
+            const blob = new Blob([swCode], { type: 'application/javascript' });
+            const swUrl = URL.createObjectURL(blob);
+            if ('serviceWorker' in navigator) {
+                navigator.serviceWorker.register(swUrl).then(reg => {
+                    console.log('Service Worker registrado com sucesso!', reg);
+                }).catch(err => console.error('Falha ao registrar SW:', err));
+            }
+        }
+
+        let deferredPrompt = null;
+        const installBtn = document.getElementById('installBtn');
+
+        window.addEventListener('beforeinstallprompt', (e) => {
+            e.preventDefault();
+            deferredPrompt = e;
+            installBtn.style.display = 'flex';
+        });
+
+        installBtn.addEventListener('click', async () => {
+            if (deferredPrompt) {
+                deferredPrompt.prompt();
+                const { outcome } = await deferredPrompt.userChoice;
+                if (outcome === 'accepted') {
+                    installBtn.style.display = 'none';
+                }
+                deferredPrompt = null;
+            } else {
+                alert('Para instalar, clique no menu do navegador → "Adicionar à tela inicial"');
+            }
+        });
+
+        window.addEventListener('load', () => {
+            createManifest();
+            registerServiceWorker();
+        });
+    })();
+</script>
+</body>
+</html>
