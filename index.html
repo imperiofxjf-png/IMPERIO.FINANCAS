@@ -38,6 +38,10 @@
         .card-receita { border-left-color: #10b981; }
         .card-despesa { border-left-color: #ef4444; }
         .card-saldo { border-left-color: #3b82f6; }
+        .card-dia-receita { border-left-color: #06b6d4; }
+        .card-dia-despesa { border-left-color: #f97316; }
+        .card-mes-receita { border-left-color: #8b5cf6; }
+        .card-mes-despesa { border-left-color: #ec4899; }
         .card-modern h4 { font-size: 0.75rem; text-transform: uppercase; color: #6b7280; margin-bottom: 8px; }
         .card-modern .valor-grande { font-size: 1.6rem; font-weight: bold; word-break: break-word; }
         .tabs-system { background: white; border-radius: 20px; padding: 5px; margin-bottom: 25px; display: flex; flex-wrap: wrap; gap: 5px; overflow-x: auto; white-space: nowrap; -webkit-overflow-scrolling: touch; }
@@ -237,7 +241,26 @@
     </div>
     <!-- FIM DOS CARDS PRINCIPAIS -->
 
-    <!-- OS CARDS DE RESUMO DIÁRIO E MENSAL FORAM REMOVIDOS CONFORME SOLICITADO -->
+    <!-- NOVOS CARDS: TOTAIS POR DIA E MÊS -->
+    <div class="dashboard-cards no-print">
+        <div class="card-modern card-dia-receita">
+            <h4><i class="fas fa-calendar-day"></i> RECEITAS DO DIA</h4>
+            <div class="valor-grande" id="totalReceitasDia">R$ 0,00</div>
+        </div>
+        <div class="card-modern card-dia-despesa">
+            <h4><i class="fas fa-calendar-day"></i> DESPESAS DO DIA</h4>
+            <div class="valor-grande" id="totalDespesasDia">R$ 0,00</div>
+        </div>
+        <div class="card-modern card-mes-receita">
+            <h4><i class="fas fa-calendar-alt"></i> RECEITAS DO MÊS</h4>
+            <div class="valor-grande" id="totalReceitasMes">R$ 0,00</div>
+        </div>
+        <div class="card-modern card-mes-despesa">
+            <h4><i class="fas fa-calendar-alt"></i> DESPESAS DO MÊS</h4>
+            <div class="valor-grande" id="totalDespesasMes">R$ 0,00</div>
+        </div>
+    </div>
+    <!-- FIM DOS NOVOS CARDS -->
 
     <div class="tabs-system no-print" id="tabContainer">
         <button class="tab-btn active" data-tab="dashboard"><i class="fas fa-chart-pie"></i> Dashboard</button>
@@ -786,9 +809,49 @@
         document.getElementById('cancelarEdicaoConta').style.display = 'none';
     }
 
-    // --- FUNÇÃO ATUALIZAR TOTAIS DIÁRIOS E MENSAIS (REMOVIDA) ---
-    // A função abaixo foi removida pois seus cards não existem mais.
-    // O código que a chamava também foi removido da função atualizarInterface().
+    // NOVA FUNÇÃO: Atualizar totais por dia e mês
+    function atualizarTotaisDiariosMensais() {
+        const hoje = new Date();
+        const hojeStr = hoje.toISOString().split('T')[0];
+        const mesAtual = hoje.getMonth();
+        const anoAtual = hoje.getFullYear();
+
+        let totalReceitasDia = 0;
+        let totalDespesasDia = 0;
+        let totalReceitasMes = 0;
+        let totalDespesasMes = 0;
+
+        transacoes.forEach(t => {
+            const dataTransacao = new Date(t.data);
+            const dataStr = t.data;
+            const mesTransacao = dataTransacao.getMonth();
+            const anoTransacao = dataTransacao.getFullYear();
+
+            // Filtro por Dia
+            if (dataStr === hojeStr) {
+                if (t.tipo === 'receita') {
+                    totalReceitasDia += t.valor;
+                } else {
+                    totalDespesasDia += t.valor;
+                }
+            }
+
+            // Filtro por Mês
+            if (mesTransacao === mesAtual && anoTransacao === anoAtual) {
+                if (t.tipo === 'receita') {
+                    totalReceitasMes += t.valor;
+                } else {
+                    totalDespesasMes += t.valor;
+                }
+            }
+        });
+
+        // Atualizar os elementos HTML
+        document.getElementById('totalReceitasDia').textContent = `R$ ${totalReceitasDia.toFixed(2)}`;
+        document.getElementById('totalDespesasDia').textContent = `R$ ${totalDespesasDia.toFixed(2)}`;
+        document.getElementById('totalReceitasMes').textContent = `R$ ${totalReceitasMes.toFixed(2)}`;
+        document.getElementById('totalDespesasMes').textContent = `R$ ${totalDespesasMes.toFixed(2)}`;
+    }
 
     // NOVO: função para verificar alertas de vencimento
     function verificarAlertasVencimento() {
@@ -975,6 +1038,8 @@
         // Verificar alertas e resumo de contas
         verificarAlertasVencimento();
         atualizarResumoContas();
+        // Atualizar totais diários e mensais
+        atualizarTotaisDiariosMensais();
     }
     
     // NOVO: renderizar lista de contas a pagar/receber
@@ -1119,6 +1184,10 @@
             document.getElementById('totalReceitas').innerHTML = 'R$ 0,00';
             document.getElementById('totalDespesas').innerHTML = 'R$ 0,00';
             document.getElementById('saldoTotal').innerHTML = 'R$ 0,00';
+            document.getElementById('totalReceitasDia').innerHTML = 'R$ 0,00';
+            document.getElementById('totalDespesasDia').innerHTML = 'R$ 0,00';
+            document.getElementById('totalReceitasMes').innerHTML = 'R$ 0,00';
+            document.getElementById('totalDespesasMes').innerHTML = 'R$ 0,00';
             document.getElementById('categoriaSelect').innerHTML = '<option>Nenhuma conta selecionada</option>';
             document.querySelector('#tabelaTransacoes tbody').innerHTML = '<tr><td colspan="6">Modo Administrador - Selecione uma conta para ver dados</td></tr>';
             document.getElementById('listaCategorias').innerHTML = '<p>Modo Administrador</p>';
@@ -1134,6 +1203,9 @@
         document.getElementById('totalReceitas').innerHTML = `R$ ${totalRec.toFixed(2)}`;
         document.getElementById('totalDespesas').innerHTML = `R$ ${totalDesp.toFixed(2)}`;
         document.getElementById('saldoTotal').innerHTML = `R$ ${(totalRec - totalDesp).toFixed(2)}`;
+        
+        // Atualizar totais diários e mensais
+        atualizarTotaisDiariosMensais();
         
         const catSelect = document.getElementById('categoriaSelect');
         if (catSelect) {
