@@ -38,10 +38,6 @@
         .card-receita { border-left-color: #10b981; }
         .card-despesa { border-left-color: #ef4444; }
         .card-saldo { border-left-color: #3b82f6; }
-        .card-receita-dia { border-left-color: #06b6d4; }
-        .card-receita-mes { border-left-color: #8b5cf6; }
-        .card-despesa-dia { border-left-color: #f59e0b; }
-        .card-despesa-mes { border-left-color: #ec4899; }
         .card-modern h4 { font-size: 0.75rem; text-transform: uppercase; color: #6b7280; margin-bottom: 8px; }
         .card-modern .valor-grande { font-size: 1.6rem; font-weight: bold; word-break: break-word; }
         .tabs-system { background: white; border-radius: 20px; padding: 5px; margin-bottom: 25px; display: flex; flex-wrap: wrap; gap: 5px; overflow-x: auto; white-space: nowrap; -webkit-overflow-scrolling: touch; }
@@ -117,39 +113,6 @@
         .status-online { background: rgba(255,255,255,0.2); padding: 4px 12px; border-radius: 30px; font-size: 0.75rem; }
         .status-offline { background: rgba(255,200,0,0.2); padding: 4px 12px; border-radius: 30px; font-size: 0.75rem; }
         
-        .cards-extra { 
-            display: grid; 
-            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); 
-            gap: 12px; 
-            margin-bottom: 25px; 
-        }
-        .card-extra { 
-            background: white; 
-            border-radius: 16px; 
-            padding: 14px; 
-            box-shadow: 0 4px 12px rgba(0,0,0,0.06); 
-            border-left: 4px solid;
-            text-align: center;
-        }
-        .card-extra .label { font-size: 0.7rem; text-transform: uppercase; color: #6b7280; }
-        .card-extra .value { font-size: 1.2rem; font-weight: bold; margin-top: 4px; }
-        
-        .alert-card {
-            background: #fef3c7;
-            border-left: 4px solid #f59e0b;
-            padding: 12px 16px;
-            border-radius: 12px;
-            margin-bottom: 10px;
-        }
-        .alert-card.vencido {
-            background: #fee2e2;
-            border-left-color: #dc2626;
-        }
-        .alert-card.hoje {
-            background: #fef3c7;
-            border-left-color: #f59e0b;
-        }
-        
         /* Estilos para a pesquisa */
         .search-container {
             display: flex;
@@ -215,8 +178,6 @@
             th, td { font-size: 0.7rem; padding: 6px; }
             .chart-box { padding: 10px; }
             .categoria-item, .forma-item { font-size: 0.7rem; padding: 3px 10px; }
-            .cards-extra { grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 8px; }
-            .card-extra .value { font-size: 1rem; }
             .search-container { padding: 10px; }
             .search-container .input-field { min-width: 100%; }
         }
@@ -259,6 +220,7 @@
         </div>
     </div>
 
+    <!-- CARDS PRINCIPAIS (RECEITAS, DESPESAS, SALDO) -->
     <div class="dashboard-cards no-print">
         <div class="card-modern card-receita">
             <h4><i class="fas fa-arrow-up"></i> TOTAL RECEITAS</h4>
@@ -273,26 +235,9 @@
             <div class="valor-grande" id="saldoTotal">R$ 0,00</div>
         </div>
     </div>
+    <!-- FIM DOS CARDS PRINCIPAIS -->
 
-    <!-- NOVOS CARDS: Resumos Diários e Mensais -->
-    <div class="cards-extra no-print">
-        <div class="card-extra" style="border-left-color: #06b6d4;">
-            <div class="label"><i class="fas fa-sun"></i> Receitas Hoje</div>
-            <div class="value" id="receitasDia" style="color: #06b6d4;">R$ 0,00</div>
-        </div>
-        <div class="card-extra" style="border-left-color: #8b5cf6;">
-            <div class="label"><i class="fas fa-calendar-alt"></i> Receitas Mês</div>
-            <div class="value" id="receitasMes" style="color: #8b5cf6;">R$ 0,00</div>
-        </div>
-        <div class="card-extra" style="border-left-color: #f59e0b;">
-            <div class="label"><i class="fas fa-sun"></i> Despesas Hoje</div>
-            <div class="value" id="despesasDia" style="color: #f59e0b;">R$ 0,00</div>
-        </div>
-        <div class="card-extra" style="border-left-color: #ec4899;">
-            <div class="label"><i class="fas fa-calendar-alt"></i> Despesas Mês</div>
-            <div class="value" id="despesasMes" style="color: #ec4899;">R$ 0,00</div>
-        </div>
-    </div>
+    <!-- OS CARDS DE RESUMO DIÁRIO E MENSAL FORAM REMOVIDOS CONFORME SOLICITADO -->
 
     <div class="tabs-system no-print" id="tabContainer">
         <button class="tab-btn active" data-tab="dashboard"><i class="fas fa-chart-pie"></i> Dashboard</button>
@@ -841,46 +786,9 @@
         document.getElementById('cancelarEdicaoConta').style.display = 'none';
     }
 
-    // --- FUNÇÃO ATUALIZAR TOTAIS DIÁRIOS E MENSAIS ---
-    function atualizarTotaisDiariosEMensais() {
-        if (!contaAtual || usuarioLogado?.isMaster) {
-            document.getElementById('receitasDia').textContent = 'R$ 0,00';
-            document.getElementById('receitasMes').textContent = 'R$ 0,00';
-            document.getElementById('despesasDia').textContent = 'R$ 0,00';
-            document.getElementById('despesasMes').textContent = 'R$ 0,00';
-            return;
-        }
-
-        const hoje = new Date();
-        const anoAtual = hoje.getFullYear();
-        const mesAtual = hoje.getMonth();
-        const diaAtual = hoje.getDate();
-
-        const hojeStr = `${anoAtual}-${String(mesAtual + 1).padStart(2, '0')}-${String(diaAtual).padStart(2, '0')}`;
-        const mesStr = `${anoAtual}-${String(mesAtual + 1).padStart(2, '0')}`;
-
-        let receitasDiaTotal = 0;
-        let despesasDiaTotal = 0;
-        let receitasMesTotal = 0;
-        let despesasMesTotal = 0;
-
-        transacoes.forEach(t => {
-            const dataTransacao = t.data;
-            if (dataTransacao.startsWith(hojeStr)) {
-                if (t.tipo === 'receita') receitasDiaTotal += t.valor;
-                else despesasDiaTotal += t.valor;
-            }
-            if (dataTransacao.startsWith(mesStr)) {
-                if (t.tipo === 'receita') receitasMesTotal += t.valor;
-                else despesasMesTotal += t.valor;
-            }
-        });
-
-        document.getElementById('receitasDia').textContent = `R$ ${receitasDiaTotal.toFixed(2)}`;
-        document.getElementById('receitasMes').textContent = `R$ ${receitasMesTotal.toFixed(2)}`;
-        document.getElementById('despesasDia').textContent = `R$ ${despesasDiaTotal.toFixed(2)}`;
-        document.getElementById('despesasMes').textContent = `R$ ${despesasMesTotal.toFixed(2)}`;
-    }
+    // --- FUNÇÃO ATUALIZAR TOTAIS DIÁRIOS E MENSAIS (REMOVIDA) ---
+    // A função abaixo foi removida pois seus cards não existem mais.
+    // O código que a chamava também foi removido da função atualizarInterface().
 
     // NOVO: função para verificar alertas de vencimento
     function verificarAlertasVencimento() {
@@ -1064,7 +972,7 @@
             }
         }
         
-        atualizarTotaisDiariosEMensais();
+        // Verificar alertas e resumo de contas
         verificarAlertasVencimento();
         atualizarResumoContas();
     }
@@ -1216,10 +1124,6 @@
             document.getElementById('listaCategorias').innerHTML = '<p>Modo Administrador</p>';
             document.querySelector('#ultimasTransacoes tbody').innerHTML = '<tr><td colspan="4">Modo Administrador</td></tr>';
             document.getElementById('listaFormasPagamento').innerHTML = '';
-            document.getElementById('receitasDia').textContent = 'R$ 0,00';
-            document.getElementById('receitasMes').textContent = 'R$ 0,00';
-            document.getElementById('despesasDia').textContent = 'R$ 0,00';
-            document.getElementById('despesasMes').textContent = 'R$ 0,00';
             await renderizarListaContasAdmin();
             return;
         }
